@@ -1,0 +1,457 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>census-int-mock-envoy-limiter</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>uk.gov.ons.ctp.integration</groupId>
+    <artifactId>census-int-common-config</artifactId>
+    <version>0.0.15</version>
+  </parent>
+
+  <name>Census Mock Case API Service</name>
+  <description>Census Mock Envoy Limiter for development/testing</description>
+
+  <properties>
+    <skip.integration.tests>true</skip.integration.tests>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <powermock-version>2.0.0</powermock-version>
+  </properties>
+
+  <scm>
+    <connection>scm:git:https://github.com/ONSdigital/census-contact-centre-service</connection>
+    <developerConnection>scm:git:https://github.com/ONSdigital/census-contact-centre-service</developerConnection>
+    <url>https://github.com/ONSdigital/census-contact-centre-service</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <profiles>
+    <profile>
+      <id>artifactory</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <repositories>
+        <repository>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <id>central</id>
+          <name>External Virtual Repository</name>
+          <url>https://ons.jfrog.io/ons/external-repos</url>
+        </repository>
+        <repository>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <id>releases</id>
+          <name>libs-release</name>
+          <url>https://ons.jfrog.io/ons/libs-releases-local</url>
+        </repository>
+        <repository>
+          <id>snapshots</id>
+          <url>https://ons.jfrog.io/ons/libs-snapshots-local/</url>
+        </repository>
+      </repositories>
+
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <name>External Virtual Repository</name>
+          <url>https://ons.jfrog.io/ons/external-repos</url>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+  <dependencies>
+    <!-- Spring dependencies -->
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-tomcat</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-undertow</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aspects</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>mockwebserver</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- SPRING END -->
+
+    <!-- ONS libraries -->
+
+    <dependency>
+      <groupId>uk.gov.ons.ctp.integration.common</groupId>
+      <artifactId>framework</artifactId>
+      <version>0.0.64</version>
+    </dependency>
+
+    <dependency>
+      <groupId>uk.gov.ons.ctp.integration.common</groupId>
+      <artifactId>test-framework</artifactId>
+      <version>0.0.17</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>uk.gov.ons.ctp.integration.common</groupId>
+      <artifactId>product-reference</artifactId>
+      <version>1.0.8</version>
+    </dependency>
+
+    <dependency>
+      <groupId>uk.gov.ons.ctp.integration.common</groupId>
+      <artifactId>census-int-case-api-client</artifactId>
+      <version>0.0.17</version>
+    </dependency>
+        
+    <dependency>
+      <groupId>uk.gov.ons.ctp.integration.common</groupId>
+      <artifactId>census-int-rate-limiter-client</artifactId>
+      <version>0.0.1</version>
+    </dependency>
+    
+    <!-- ONS END -->
+
+    <!-- third party libraries -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ma.glasnost.orika</groupId>
+      <artifactId>orika-eclipse-tools</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.godaddy</groupId>
+      <artifactId>logging</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.dkanejs.maven.plugins</groupId>
+      <artifactId>docker-compose-maven-plugin</artifactId>
+      <version>2.0.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-validator</groupId>
+      <artifactId>commons-validator</artifactId>
+      <version>1.6</version>
+    </dependency>
+
+    <!-- Testing -->
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.mashape.unirest</groupId>
+      <artifactId>unirest-java</artifactId>
+      <version>1.4.9</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito2</artifactId>
+      <version>${powermock-version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <version>${powermock-version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-core</artifactId>
+      <version>${powermock-version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4-rule</artifactId>
+      <version>${powermock-version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.springfox</groupId>
+      <artifactId>springfox-swagger2</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.springfox</groupId>
+      <artifactId>springfox-swagger-ui</artifactId>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <defaultGoal>clean install</defaultGoal>
+
+    <plugins>
+      <plugin>
+        <groupId>com.dkanejs.maven.plugins</groupId>
+        <artifactId>docker-compose-maven-plugin</artifactId>
+        <version>1.0.3</version>
+        <executions>
+          <execution>
+            <id>pre-stop</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>down</goal>
+            </goals>
+            <configuration>
+              <composeFile>${project.basedir}/docker-compose.yml</composeFile>
+              <skip>${skip.integration.tests}</skip>
+            </configuration>
+          </execution>
+          <execution>
+            <id>up</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>up</goal>
+            </goals>
+            <configuration>
+              <composeFile>${project.basedir}/docker-compose.yml</composeFile>
+              <detachedMode>true</detachedMode>
+              <skip>${skip.integration.tests}</skip>
+            </configuration>
+          </execution>
+          <execution>
+            <id>down</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>down</goal>
+            </goals>
+            <configuration>
+              <composeFile>${project.basedir}/docker-compose.yml</composeFile>
+              <skip>${skip.integration.tests}</skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>com.coveo</groupId>
+        <artifactId>fmt-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <executable>true</executable>
+          <mainClass>uk.gov.ons.ctp.integration.mockenvoylimiter.MockEnvoyLimiterApplication</mainClass>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.2</version>
+        <executions>
+          <execution>
+            <id>default-prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>pre-unit-test</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
+              <propertyName>surefireArgLine</propertyName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>post-unit-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>pre-integration-test</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/coverage-reports/jacoco-it.exec</destFile>
+              <propertyName>failsafeArgLine</propertyName>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>post-integration-test</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/coverage-reports/jacoco-it.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <forkCount>1</forkCount>
+          <reuseForks>true</reuseForks>
+          <argLine>${surefireArgLine}</argLine>
+          <classpathDependencyExcludes>
+            <classpathDependencyExcludes>${project.groupId}:${project.artifactId}
+            </classpathDependencyExcludes>
+          </classpathDependencyExcludes>
+          <additionalClasspathElements>
+            <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <phase>test</phase>
+          </execution>
+        </executions>
+      </plugin>
+
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.0.0-M3</version>
+        <configuration>
+          <argLine>${failsafeArgLine}</argLine>
+          <skip>${skip.integration.tests}</skip>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <phase>integration-test</phase>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+</project>

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mockenvoylimiter
+  labels:
+    app: mockenvoylimiter
+spec:
+  replicas: [REPLICAS]
+  selector:
+    matchLabels:
+      app: mockenvoylimiter
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      name: mockenvoylimiter
+      labels:
+        app: mockenvoylimiter
+    spec:
+      containers:
+      - name: mockenvoylimiter
+        image: eu.gcr.io/[GCR]/census-mock-envoy-limiter:[CONTAINER_VERSION]
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "[CPU_REQ]"
+            memory: "[MEM_REQ]"
+          limits:
+            cpu: "[CPU_MAX]"
+            memory: "[MEM_MAX]"
+        readinessProbe:
+          httpGet:
+            path: /info
+            port: 8161
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /info
+            port: 8161
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        ports:
+        - name: http-server
+          containerPort: 8161
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: "-Dlogging.useJson=true
+            -Dspring.profiles.active=[ENV]
+            -Dlogging.level.uk.gov.ons.ctp=DEBUG
+            -Dlogging.level.org.springframework=WARN
+            -Dendpoints.autoconfig.enabled=false-Dendpoints.beans.enabled=false
+            -Dendpoints.configprops.enabled=false
+            -Dendpoints.dump.enabled=false
+            -Dendpoints.env.enabled=false
+            -Dendpoints.metrics.enabled=false
+            -Dendpoints.mapping.enabled=false
+            -Dendpoints.shutdown.enabled=false
+            -Dendpoints.trace.enabled=false
+            -Dmanagement.health.rabbit.enabled=false"

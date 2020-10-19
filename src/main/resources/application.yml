@@ -1,0 +1,55 @@
+info:
+  name: ${project.artifactId}
+  version: ${project.version}
+  origin: ${scm.url}
+  commit: ${buildNumber}
+  branch: ${scmBranch}
+  built: ${timestamp}
+
+# logging config here as a reminder as to how to override logback from cmd line
+# ie -Dlogging.level.org.springframework=DEBUG
+logging:
+  level:
+    uk.gov.ons.ctp: DEBUG
+    org.springframework: ERROR
+  profile: DEV
+  useJson: false
+
+
+management:
+  health:
+    rabbit:
+      enabled: false
+  endpoints:
+    enabled-by-default: true
+    web:
+      base-path: /
+  info:
+    env:
+      enabled: true
+    build:
+      enabled: true
+    git:
+      mode: SIMPLE
+      enabled: true
+    defaults:
+      enabled: true
+
+server:
+  port: 8181
+
+spring:
+  mvc:
+    servlet:
+      path: /
+
+  #  security:
+  #    user:
+  #      name: serco_cks
+  #      password: temporary
+  output:
+    ansi:
+      enabled: never
+  application:
+    name: ONS CensusIntMockEnvoyLimiter
+
