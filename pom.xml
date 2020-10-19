@@ -22,9 +22,9 @@
   </properties>
 
   <scm>
-    <connection>scm:git:https://github.com/ONSdigital/census-contact-centre-service</connection>
-    <developerConnection>scm:git:https://github.com/ONSdigital/census-contact-centre-service</developerConnection>
-    <url>https://github.com/ONSdigital/census-contact-centre-service</url>
+    <connection>scm:git:https://github.com/ONSdigital/census-mock-envoy-listener</connection>
+    <developerConnection>scm:git:https://github.com/ONSdigital/census-mock-envoy-listener</developerConnection>
+    <url>https://github.com/ONSdigital/census-mock-envoy-listener</url>
     <tag>HEAD</tag>
   </scm>
 
