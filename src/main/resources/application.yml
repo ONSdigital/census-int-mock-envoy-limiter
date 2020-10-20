@@ -42,11 +42,6 @@ spring:
   mvc:
     servlet:
       path: /
-
-  #  security:
-  #    user:
-  #      name: serco_cks
-  #      password: temporary
   output:
     ansi:
       enabled: never
