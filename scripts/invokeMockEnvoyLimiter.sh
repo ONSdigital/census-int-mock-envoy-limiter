@@ -43,7 +43,7 @@ curl -s -H "Content-Type: application/json" "http://localhost:8181/info" | jq
 echo -e "\n"
 
 echo "2) Turn on limits. Expecting http 429 status now:" 
-curl -X POST -H "Content-Type: application/json" "http://localhost:8181/limit?enabled=true"
+curl -s -X POST -H "Content-Type: application/json" "http://localhost:8181/limit?enabled=true"
 echo -e "\n"
 
 echo "3) Send in a couple of requests:"
@@ -57,7 +57,7 @@ echo -e "\n"
 
 
 echo "5) Switch limiter off. Back to http 200 status:"
-curl -X POST -H "Content-Type: application/json" "http://localhost:8181/limit?enabled=false"
+curl -s -X POST -H "Content-Type: application/json" "http://localhost:8181/limit?enabled=false"
 echo -e "\n"
 
 echo "6) Send in request:"
