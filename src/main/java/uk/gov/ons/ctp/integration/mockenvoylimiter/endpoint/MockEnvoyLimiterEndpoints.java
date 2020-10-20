@@ -37,7 +37,6 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
 
   private List<RateLimitRequest> capturedRequests = new ArrayList<>();
 
-  
   @RequestMapping(value = "/info", method = RequestMethod.GET)
   public ResponseEntity<String> info() {
     return ResponseEntity.ok("CENSUS MOCK ENVOY LIMITER");
@@ -67,13 +66,18 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
   public ResponseEntity<String> limit(@RequestParam("enabled") boolean enabled) {
     // Reset recorded data
     capturedRequests.clear();
-    
+
     // Update limit type caller has told us to use
     this.limitMode = enabled ? LimitMode.LimitEnabled : LimitMode.NoLimits;
-    
-    return ResponseEntity.ok("Limit control called. Now responding with http " + limitMode.httpResponseStatus.value() + " and code '" + limitMode.limitStatus + "'");
+
+    return ResponseEntity.ok(
+        "Limit control called. Now responding with http "
+            + limitMode.httpResponseStatus.value()
+            + " and code '"
+            + limitMode.limitStatus
+            + "'");
   }
-  
+
   @RequestMapping(value = "/requests", method = RequestMethod.GET)
   public ResponseEntity<List<RateLimitRequest>> requests() {
     return ResponseEntity.ok(capturedRequests);
