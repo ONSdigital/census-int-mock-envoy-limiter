@@ -1,0 +1,27 @@
+---
+sudo: required
+
+services:
+  - docker
+
+language: java
+jdk: openjdk11
+
+before_install:
+  - cp .mvn.settings.xml $HOME/.m2/settings.xml
+  - mvn fmt:check
+
+script:
+  - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
+  - echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, PR=$PR, BRANCH=$BRANCH"
+  - travis_wait mvn verify
+
+after_success:
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+      ./scripts/docker_push.sh;
+    fi
+
+cache:
+  directories:
+    - $HOME/.m2
+
