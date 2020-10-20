@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: mockenvoylimiter
-        image: eu.gcr.io/[GCR]/census-mock-envoy-limiter:[CONTAINER_VERSION]
+        image: eu.gcr.io/[GCR]/census-int-mock-envoy-limiter:[CONTAINER_VERSION]
         imagePullPolicy: Always
         resources:
           requests:
