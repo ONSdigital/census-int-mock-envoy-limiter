@@ -53,15 +53,4 @@ spec:
         env:
         - name: JAVA_TOOL_OPTIONS
           value: "-Dlogging.useJson=true
-            -Dspring.profiles.active=[ENV]
-            -Dlogging.level.uk.gov.ons.ctp=DEBUG
-            -Dlogging.level.org.springframework=WARN
-            -Dendpoints.autoconfig.enabled=false-Dendpoints.beans.enabled=false
-            -Dendpoints.configprops.enabled=false
-            -Dendpoints.dump.enabled=false
-            -Dendpoints.env.enabled=false
-            -Dendpoints.metrics.enabled=false
-            -Dendpoints.mapping.enabled=false
-            -Dendpoints.shutdown.enabled=false
-            -Dendpoints.trace.enabled=false
-            -Dmanagement.health.rabbit.enabled=false"
+            -Dspring.profiles.active=[ENV]"
