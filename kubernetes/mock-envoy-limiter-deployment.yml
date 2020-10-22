@@ -34,7 +34,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /info
-            port: 8161
+            port: 8181
           initialDelaySeconds: 20
           periodSeconds: 10
           failureThreshold: 3
@@ -42,7 +42,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /info
-            port: 8161
+            port: 8181
           initialDelaySeconds: 30
           periodSeconds: 10
           failureThreshold: 3
