@@ -2,6 +2,7 @@ package uk.gov.ons.ctp.integration.mockenvoylimiter.endpoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,9 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import uk.gov.ons.ctp.common.domain.CaseType;
+import uk.gov.ons.ctp.common.domain.UniquePropertyReferenceNumber;
 import uk.gov.ons.ctp.common.endpoint.CTPEndpoint;
-import uk.gov.ons.ctp.integration.ratelimiter.model.CurrentLimit;
-import uk.gov.ons.ctp.integration.ratelimiter.model.LimitStatus;
+import uk.gov.ons.ctp.common.error.CTPException;
+import uk.gov.ons.ctp.integration.common.product.model.Product;
+import uk.gov.ons.ctp.integration.common.product.model.Product.DeliveryChannel;
+import uk.gov.ons.ctp.integration.mockenvoylimiter.processor.MockProcessor;
+import uk.gov.ons.ctp.integration.mockenvoylimiter.processor.RateLimiterClientRequest;
 import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitRequest;
 import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitResponse;
 
@@ -19,6 +25,8 @@ import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitResponse;
 @RestController
 @RequestMapping(value = "/", produces = "application/json")
 public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
+
+  @Autowired private MockProcessor processor;
 
   private enum LimitMode {
     NoLimits(HttpStatus.OK, "OK"),
@@ -43,23 +51,58 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
   }
 
   @RequestMapping(value = "/json", method = RequestMethod.POST)
-  public ResponseEntity<RateLimitResponse> json(@RequestBody RateLimitRequest rateLimitRequestDTO) {
+  public ResponseEntity<RateLimitResponse> json(@RequestBody RateLimitRequest rateLimitRequestDTO)
+      throws CTPException {
     // Record request
     capturedRequests.add(rateLimitRequestDTO);
 
-    // Simulate rate limit response. Either 'OK' or 'OVER_LIMIT'
-    List<LimitStatus> statuses = new ArrayList<>();
-    for (int i = 0; i < rateLimitRequestDTO.getDescriptors().size(); i++) {
-      CurrentLimit currentLimit = new CurrentLimit((i + 1) * 100, "HOUR");
-      LimitStatus status = new LimitStatus(limitMode.limitStatus, currentLimit, 999);
-      statuses.add(status);
-    }
+    RateLimiterClientRequest request = new RateLimiterClientRequest();
+    Product product = new Product();
+    rateLimitRequestDTO
+        .getDescriptors()
+        .forEach(
+            desc -> {
+              desc.getEntries()
+                  .forEach(
+                      entry -> {
+                        final String key = entry.getKey();
+                        final String value = entry.getValue();
+                        if (key.equals("productGroup")) {
+                          product.setProductGroup(Product.ProductGroup.valueOf(value));
+                        }
+                        if (key.equals("individual")) {
+                          product.setIndividual(Boolean.valueOf(value));
+                        }
+                        if (key.equals("deliveryChannel")) {
+                          product.setDeliveryChannel(DeliveryChannel.valueOf(value));
+                        }
+                        if (key.equals("caseType")) {
+                          request.setCaseType(CaseType.valueOf(value));
+                        }
+                        if (key.equals("ipAddress")) {
+                          request.setIpAddress(value);
+                        }
+                        if (key.equals("uprn")) {
+                          request.setUprn(UniquePropertyReferenceNumber.create(value));
+                        }
+                        if (key.equals("telNo")) {
+                          request.setTelNo(value);
+                        }
+                      });
+            });
+    request.setProduct(product);
 
-    // Complete building of response
-    String httpCode = Integer.toString(limitMode.httpResponseStatus.value());
-    RateLimitResponse response = new RateLimitResponse(httpCode, statuses);
+    RateLimitResponse response =
+        processor.checkRateLimit(
+            request.getProduct(),
+            request.getCaseType(),
+            request.getIpAddress(),
+            request.getUprn(),
+            request.getTelNo());
 
-    return ResponseEntity.status(limitMode.httpResponseStatus).body(response);
+    HttpStatus httpStatus =
+        response.getOverallCode().equals("OK") ? HttpStatus.OK : HttpStatus.TOO_MANY_REQUESTS;
+    return ResponseEntity.status(httpStatus).body(response);
   }
 
   @RequestMapping(value = "/limit", method = RequestMethod.POST)
