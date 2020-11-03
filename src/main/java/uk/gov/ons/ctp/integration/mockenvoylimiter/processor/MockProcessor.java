@@ -31,6 +31,12 @@ public class MockProcessor {
   private Map<String, Integer> allowanceMap = new HashMap<>();
   private Map<String, Map<String, List<Integer>>> postingsTimeMap = new HashMap<>();
 
+  @PostConstruct
+  private void clearMaps() {
+    allowanceMap.clear();
+    postingsTimeMap.clear();
+  }
+
   public RateLimitResponse checkRateLimit(
       Product product,
       CaseType caseType,
@@ -62,9 +68,10 @@ public class MockProcessor {
     List<String> requestKeyList = getKeys(rateLimiterClientRequest);
     final IsValidRequest isValidRequest =
         isValidateRequest(requestKeyList, rateLimiterClientRequest);
-    if (isValidRequest.isValid()) {
-      postRequest(requestKeyList, rateLimiterClientRequest);
-    }
+    postRequest(
+        requestKeyList,
+        rateLimiterClientRequest); // always post - it burns allowances every time for all scenarios
+
     return isValidRequest;
   }
 
@@ -132,6 +139,9 @@ public class MockProcessor {
       }
       final String recordKey = requestKey + "(" + valueToRecord + ")";
       recordRequest(isValidRequest, recordKey, noRequestAllowed, postsWithinScopeCount);
+    }
+    if (!isValidRequest.isValid()) {
+      dumpMaps(requestKeyList);
     }
     return isValidRequest;
   }
@@ -270,5 +280,14 @@ public class MockProcessor {
                       });
                   value1.put(key2, updatedTimeList);
                 }));
+  }
+
+  private void dumpMaps(List<String> requestKeyList) {
+    postingsTimeMap.forEach(
+        (key1, value1) -> {
+          if (requestKeyList.contains(key1)) {
+            value1.forEach((key2, value2) -> log.info(key1 + ": " + key2 + " = " + value2.size()));
+          }
+        });
   }
 }

@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.ons.ctp.common.domain.CaseType;
 import uk.gov.ons.ctp.common.domain.UniquePropertyReferenceNumber;
 import uk.gov.ons.ctp.common.endpoint.CTPEndpoint;
-import uk.gov.ons.ctp.common.error.CTPException;
 import uk.gov.ons.ctp.integration.common.product.model.Product;
 import uk.gov.ons.ctp.integration.common.product.model.Product.DeliveryChannel;
 import uk.gov.ons.ctp.integration.mockenvoylimiter.processor.MockProcessor;
@@ -41,9 +40,7 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
     String limitStatus;
   }
 
-  private LimitMode limitMode = LimitMode.NoLimits;
-
-  private List<RateLimitRequest> capturedRequests = new ArrayList<>();
+  private final List<RateLimitRequest> capturedRequests = new ArrayList<>();
 
   @RequestMapping(value = "/info", method = RequestMethod.GET)
   public ResponseEntity<String> info() {
@@ -51,8 +48,7 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
   }
 
   @RequestMapping(value = "/json", method = RequestMethod.POST)
-  public ResponseEntity<RateLimitResponse> json(@RequestBody RateLimitRequest rateLimitRequestDTO)
-      throws CTPException {
+  public ResponseEntity<RateLimitResponse> json(@RequestBody RateLimitRequest rateLimitRequestDTO) {
     // Record request
     capturedRequests.add(rateLimitRequestDTO);
 
@@ -61,35 +57,34 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
     rateLimitRequestDTO
         .getDescriptors()
         .forEach(
-            desc -> {
-              desc.getEntries()
-                  .forEach(
-                      entry -> {
-                        final String key = entry.getKey();
-                        final String value = entry.getValue();
-                        if (key.equals("productGroup")) {
-                          product.setProductGroup(Product.ProductGroup.valueOf(value));
-                        }
-                        if (key.equals("individual")) {
-                          product.setIndividual(Boolean.valueOf(value));
-                        }
-                        if (key.equals("deliveryChannel")) {
-                          product.setDeliveryChannel(DeliveryChannel.valueOf(value));
-                        }
-                        if (key.equals("caseType")) {
-                          request.setCaseType(CaseType.valueOf(value));
-                        }
-                        if (key.equals("ipAddress")) {
-                          request.setIpAddress(value);
-                        }
-                        if (key.equals("uprn")) {
-                          request.setUprn(UniquePropertyReferenceNumber.create(value));
-                        }
-                        if (key.equals("telNo")) {
-                          request.setTelNo(value);
-                        }
-                      });
-            });
+            desc ->
+                desc.getEntries()
+                    .forEach(
+                        entry -> {
+                          final String key = entry.getKey();
+                          final String value = entry.getValue();
+                          if (key.equals("productGroup")) {
+                            product.setProductGroup(Product.ProductGroup.valueOf(value));
+                          }
+                          if (key.equals("individual")) {
+                            product.setIndividual(Boolean.valueOf(value));
+                          }
+                          if (key.equals("deliveryChannel")) {
+                            product.setDeliveryChannel(DeliveryChannel.valueOf(value));
+                          }
+                          if (key.equals("caseType")) {
+                            request.setCaseType(CaseType.valueOf(value));
+                          }
+                          if (key.equals("ipAddress")) {
+                            request.setIpAddress(value);
+                          }
+                          if (key.equals("uprn")) {
+                            request.setUprn(UniquePropertyReferenceNumber.create(value));
+                          }
+                          if (key.equals("telNo")) {
+                            request.setTelNo(value);
+                          }
+                        }));
     request.setProduct(product);
 
     RateLimitResponse response =
@@ -111,7 +106,7 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
     capturedRequests.clear();
 
     // Update limit type caller has told us to use
-    this.limitMode = enabled ? LimitMode.LimitEnabled : LimitMode.NoLimits;
+    LimitMode limitMode = enabled ? LimitMode.LimitEnabled : LimitMode.NoLimits;
 
     return ResponseEntity.ok(
         "Limit control called. Now responding with http "
