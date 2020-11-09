@@ -17,23 +17,26 @@ logging:
 
 
 management:
-  health:
-    rabbit:
-      enabled: false
   endpoints:
-    enabled-by-default: true
+    enabled-by-default: false
     web:
       base-path: /
-  info:
-    env:
+      exposure:
+        include: info, health
+  endpoint:
+    info:
+      enabled: true 
+    health:
       enabled: true
-    build:
-      enabled: true
-    git:
-      mode: SIMPLE
-      enabled: true
-    defaults:
-      enabled: true
+  metrics:
+    tags:
+      application: MockEnvoyRateLimiter
+      pod: ${HOSTNAME}
+    export:
+      stackdriver:
+        project-id: ${GOOGLE_CLOUD_PROJECT}
+        enabled: false
+        step: PT2M
 
 server:
   port: 8181
@@ -42,11 +45,6 @@ spring:
   mvc:
     servlet:
       path: /
-
-  #  security:
-  #    user:
-  #      name: serco_cks
-  #      password: temporary
   output:
     ansi:
       enabled: never
