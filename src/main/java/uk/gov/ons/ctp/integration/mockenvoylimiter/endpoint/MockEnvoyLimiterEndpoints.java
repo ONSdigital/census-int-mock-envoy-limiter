@@ -81,6 +81,7 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
 
   @RequestMapping(value = "/json", method = RequestMethod.POST)
   public ResponseEntity<RateLimitResponse> json(@RequestBody RateLimitRequest rateLimitRequestDTO) {
+    log.with(rateLimitRequestDTO).info("Limiter request");
 
     List<LimitStatus> statuses = new ArrayList<>();
     for (int i = 0; i < rateLimitRequestDTO.getDescriptors().size(); i++) {
