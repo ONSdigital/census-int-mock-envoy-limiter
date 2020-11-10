@@ -6,8 +6,12 @@ import lombok.Data;
 import uk.gov.ons.ctp.integration.ratelimiter.model.LimitStatus;
 
 @Data
-public class IsValidRequest {
+public class RequestValidationStatus {
 
   private List<LimitStatus> limitStatusList = new ArrayList<>();
   private boolean valid = true;
+
+  public void add(final LimitStatus limitStatus) {
+    limitStatusList.add(limitStatus);
+  }
 }

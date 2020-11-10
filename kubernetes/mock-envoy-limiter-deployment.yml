@@ -42,7 +42,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /info
-            port: 8181
+            port: 8161
           initialDelaySeconds: 30
           periodSeconds: 10
           failureThreshold: 3
