@@ -1,5 +1,7 @@
 package uk.gov.ons.ctp.integration.mockenvoylimiter.endpoint;
 
+import com.godaddy.logging.Logger;
+import com.godaddy.logging.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.ons.ctp.common.endpoint.CTPEndpoint;
+import uk.gov.ons.ctp.integration.ratelimiter.client.RateLimiterClient;
 import uk.gov.ons.ctp.integration.ratelimiter.model.CurrentLimit;
 import uk.gov.ons.ctp.integration.ratelimiter.model.LimitStatus;
 import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitRequest;
@@ -19,6 +22,7 @@ import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitResponse;
 @RestController
 @RequestMapping(value = "/", produces = "application/json")
 public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
+  private static final Logger log = LoggerFactory.getLogger(RateLimiterClient.class);
 
   private enum LimitMode {
     NoLimits(HttpStatus.OK, "OK"),
@@ -44,6 +48,8 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
 
   @RequestMapping(value = "/json", method = RequestMethod.POST)
   public ResponseEntity<RateLimitResponse> json(@RequestBody RateLimitRequest rateLimitRequestDTO) {
+    log.with(rateLimitRequestDTO).info("Limiter request");
+
     // Record request
     capturedRequests.add(rateLimitRequestDTO);
 
