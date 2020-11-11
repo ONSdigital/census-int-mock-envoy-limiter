@@ -15,8 +15,8 @@ import uk.gov.ons.ctp.common.domain.UniquePropertyReferenceNumber;
 import uk.gov.ons.ctp.common.endpoint.CTPEndpoint;
 import uk.gov.ons.ctp.integration.common.product.model.Product;
 import uk.gov.ons.ctp.integration.common.product.model.Product.DeliveryChannel;
-import uk.gov.ons.ctp.integration.mockenvoylimiter.processor.MockProcessor;
-import uk.gov.ons.ctp.integration.mockenvoylimiter.processor.RateLimiterClientRequest;
+import uk.gov.ons.ctp.integration.mockenvoylimiter.emulator.MockLimiterCaller;
+import uk.gov.ons.ctp.integration.mockenvoylimiter.emulator.RateLimiterClientRequest;
 import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitRequest;
 import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitResponse;
 
@@ -25,7 +25,7 @@ import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitResponse;
 @RequestMapping(value = "/", produces = "application/json")
 public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
 
-  @Autowired private MockProcessor processor;
+  @Autowired private MockLimiterCaller mockLimiterCaller;
 
   private enum LimitMode {
     NoLimits(HttpStatus.OK, "OK"),
@@ -88,7 +88,7 @@ public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
     request.setProduct(product);
 
     RateLimitResponse response =
-        processor.checkRateLimit(
+        mockLimiterCaller.checkRateLimit(
             request.getProduct(),
             request.getCaseType(),
             request.getIpAddress(),

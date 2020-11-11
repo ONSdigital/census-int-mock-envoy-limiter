@@ -1,4 +1,4 @@
-package uk.gov.ons.ctp.integration.mockenvoylimiter.processor;
+package uk.gov.ons.ctp.integration.mockenvoylimiter.emulator;
 
 import lombok.Data;
 import uk.gov.ons.ctp.common.domain.CaseType;

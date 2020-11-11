@@ -1,7 +1,5 @@
-package uk.gov.ons.ctp.integration.mockenvoylimiter.processor;
+package uk.gov.ons.ctp.integration.mockenvoylimiter.emulator;
 
-import com.godaddy.logging.Logger;
-import com.godaddy.logging.LoggerFactory;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,64 +7,31 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.PostConstruct;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.time.DateUtils;
-import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.ons.ctp.common.domain.CaseType;
 import uk.gov.ons.ctp.common.domain.UniquePropertyReferenceNumber;
-import uk.gov.ons.ctp.integration.common.product.model.Product;
 import uk.gov.ons.ctp.integration.ratelimiter.model.CurrentLimit;
 import uk.gov.ons.ctp.integration.ratelimiter.model.LimitStatus;
-import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitResponse;
 
-@Data
-@NoArgsConstructor
-@Component
-public class MockProcessor {
+/**
+ * simulates the real envoy limiter - will store details
+ * as each test is run, (is NOT recreated for each test). Normally this would be undesirable in a
+ * test situation, but in our case it more realistically models the actual envoy limiter, since we
+ * won't be resetting it because it changes state for each test run, then care must be taken
+ * creating tests that do not use data that has been used before the in-memory data structures will
+ * grow big very fast, so care must be taken if a LOT of calls are made
+ */
+public class MockLimiter {
 
-  private static final Logger log = LoggerFactory.getLogger(MockProcessor.class);
-
-  private Map<String, Integer> allowanceMap = new HashMap<>();
-  private Map<String, Map<String, List<Integer>>> postingsTimeMap = new HashMap<>();
-
-  private List<UniquePropertyReferenceNumber> blackListedUprnList =
-      Collections.singletonList(UniquePropertyReferenceNumber.create("666"));
-  private List<String> blackListedIpAddressList =
+  private final Map<String, Integer> allowanceMap = new HashMap<>();
+  private final Map<String, Map<String, List<Integer>>> postingsTimeMap = new HashMap<>();
+  private final List<UniquePropertyReferenceNumber> blackListedUprnList =
+      Collections.singletonList(UniquePropertyReferenceNumber.create("9999999999999"));
+  private final List<String> blackListedIpAddressList =
       Collections.singletonList("blacklisted-ipAddress");
-  private List<String> blackListedTelNoList = Collections.singletonList("blacklisted-telNo");
+  private final List<String> blackListedTelNoList = Collections.singletonList("blacklisted-telNo");
 
-  @PostConstruct
-  private void clearMaps() {
-    allowanceMap.clear();
-    postingsTimeMap.clear();
-  }
-
-  public RateLimitResponse checkRateLimit(
-      Product product,
-      CaseType caseType,
-      String ipAddress,
-      UniquePropertyReferenceNumber uprn,
-      String telNo) {
-
-    final RateLimiterClientRequest rateLimiterClientRequest =
-        new RateLimiterClientRequest(product, caseType, ipAddress, uprn, telNo);
-    final RequestValidationStatus requestValidationStatus = postRequest(rateLimiterClientRequest);
-
-    String overallCode = "OK";
-    if (!requestValidationStatus.isValid()) {
-      overallCode = "OVER_LIMIT";
-    }
-    RateLimitResponse response =
-        new RateLimitResponse(overallCode, requestValidationStatus.getLimitStatusList());
-    final StringBuilder reason = new StringBuilder(overallCode);
-    requestValidationStatus
-        .getLimitStatusList()
-        .forEach(stat -> reason.append(stat.toString()).append(" - "));
-    log.info(reason.toString());
-    return response;
+  public MockLimiter() {
+    setupAllowances();
   }
 
   public RequestValidationStatus postRequest(
@@ -120,17 +85,13 @@ public class MockProcessor {
 
       int numberRequestsAllowed = allowanceMap.get(requestKey);
       boolean isBlackListed = false;
-      if (keyType.equals("UPRN") && blackListedUprnList.contains(request.getUprn())) {
+
+      if (blackListedIpAddressList.contains(request.getIpAddress())
+          || blackListedUprnList.contains(request.getUprn())
+          || blackListedTelNoList.contains(request.getTelNo())) {
         numberRequestsAllowed = 0;
         isBlackListed = true;
-      }
-      if (keyType.equals("IP") && blackListedIpAddressList.contains(request.getIpAddress())) {
-        numberRequestsAllowed = 0;
-        isBlackListed = true;
-      }
-      if (keyType.equals("TELNO") && blackListedTelNoList.contains(request.getTelNo())) {
-        numberRequestsAllowed = 0;
-        isBlackListed = true;
+        requestValidationStatus.setValid(false);
       }
 
       if (!isBlackListed && postedMap == null) {
@@ -164,16 +125,17 @@ public class MockProcessor {
       final String recordKey,
       final int numberRequestsAllowed,
       final int postsWithinScopeCount) {
-    final CurrentLimit currentLimit = new CurrentLimit(numberRequestsAllowed, "HOUR");
-    final LimitStatus limitStatus = new LimitStatus("", currentLimit, 0);
-    limitStatus.setCode(recordKey);
+
+    int limitRemaining;
     if (postsWithinScopeCount >= numberRequestsAllowed) {
       requestValidationStatus.setValid(false);
-      limitStatus.setLimitRemaining(0);
-      limitStatus.setCode("OVER_LIMIT");
+      limitRemaining = 0;
     } else {
-      limitStatus.setLimitRemaining(numberRequestsAllowed - postsWithinScopeCount);
+      limitRemaining = numberRequestsAllowed - postsWithinScopeCount;
     }
+
+    final CurrentLimit currentLimit = new CurrentLimit(numberRequestsAllowed,"HOUR");
+    final LimitStatus limitStatus = new LimitStatus(recordKey, currentLimit, limitRemaining);
     requestValidationStatus.getLimitStatusList().add(limitStatus);
   }
 
@@ -209,40 +171,54 @@ public class MockProcessor {
     return listKey;
   }
 
-  @PostConstruct
   private void setupAllowances() {
     allowanceMap.put("SMS-UAC-FALSE-HH-UPRN", 5);
-    allowanceMap.put("SMS-UAC-FALSE-SPG-UPRN", 5);
-    allowanceMap.put("SMS-UAC-FALSE-CE-UPRN", 5);
     allowanceMap.put("SMS-UAC-FALSE-HH-TELNO", 10);
+
+    allowanceMap.put("SMS-UAC-FALSE-SPG-UPRN", 5);
     allowanceMap.put("SMS-UAC-FALSE-SPG-TELNO", 10);
+
+    allowanceMap.put("SMS-UAC-FALSE-CE-UPRN", 5);
     allowanceMap.put("SMS-UAC-FALSE-CE-TELNO", 5);
-    allowanceMap.put("SMS-IP", 100);
+
     allowanceMap.put("SMS-UAC-TRUE-HH-UPRN", 10);
-    allowanceMap.put("SMS-UAC-TRUE-SPG-UPRN", 10);
-    allowanceMap.put("SMS-UAC-TRUE-CE-UPRN", 50);
     allowanceMap.put("SMS-UAC-TRUE-HH-TELNO", 10);
+
+    allowanceMap.put("SMS-UAC-TRUE-SPG-UPRN", 10);
     allowanceMap.put("SMS-UAC-TRUE-SPG-TELNO", 10);
+
+    allowanceMap.put("SMS-UAC-TRUE-CE-UPRN", 50);
     allowanceMap.put("SMS-UAC-TRUE-CE-TELNO", 50);
+
+    allowanceMap.put("SMS-IP", 100);
+
     allowanceMap.put("POST-UAC-FALSE-HH-UPRN", 1);
     allowanceMap.put("POST-UAC-FALSE-SPG-UPRN", 1);
     allowanceMap.put("POST-UAC-FALSE-CE-UPRN", 1);
+
     allowanceMap.put("POST-UAC-TRUE-HH-UPRN", 5);
     allowanceMap.put("POST-UAC-TRUE-SPG-UPRN", 5);
     allowanceMap.put("POST-UAC-TRUE-CE-UPRN", 50);
+
     allowanceMap.put("POST-QUESTIONNAIRE-FALSE-HH-UPRN", 1);
     allowanceMap.put("POST-QUESTIONNAIRE-FALSE-SPG-UPRN", 1);
+
     allowanceMap.put("POST-QUESTIONNAIRE-TRUE-HH-UPRN", 5);
     allowanceMap.put("POST-QUESTIONNAIRE-TRUE-SPG-UPRN", 5);
     allowanceMap.put("POST-QUESTIONNAIRE-TRUE-CE-UPRN", 50);
+
     allowanceMap.put("POST-LARGE_PRINT-FALSE-HH-UPRN", 1);
     allowanceMap.put("POST-LARGE_PRINT-FALSE-SPG-UPRN", 1);
+
     allowanceMap.put("POST-LARGE_PRINT-TRUE-HH-UPRN", 5);
     allowanceMap.put("POST-LARGE_PRINT-TRUE-SPG-UPRN", 5);
     allowanceMap.put("POST-LARGE_PRINT-TRUE-CE-UPRN", 50);
-    allowanceMap.put("POST-CONTINUATION-TRUE-HH-UPRN", 12);
-    allowanceMap.put("POST-CONTINUATION-TRUE-SPG-UPRN", 12);
-    allowanceMap.put("POST-IP", 100);
+
+    allowanceMap.put("POST-CONTINUATION-FALSE-HH-UPRN", 12);
+    allowanceMap.put("POST-CONTINUATION-FALSE-SPG-UPRN", 12);
+
+    allowanceMap.put("POST-IP", 50);
+
     setupTimeMaps();
   }
 
@@ -253,5 +229,22 @@ public class MockProcessor {
 
   private Map<String, List<Integer>> getNewTimeMap() {
     return new HashMap<>();
+  }
+
+  public void waitHours(final int hours) {
+    postingsTimeMap.forEach(
+        (key1, value1) ->
+            value1.forEach(
+                (key2, value2) -> {
+                  final List<Integer> updatedTimeList = new ArrayList<>();
+                  value2.forEach(
+                      timeValue -> {
+                        updatedTimeList.add(
+                            timeValue
+                                - hours); // we only store the day and hour now, so to roll back
+                        // just subtract hours
+                      });
+                  value1.put(key2, updatedTimeList);
+                }));
   }
 }
