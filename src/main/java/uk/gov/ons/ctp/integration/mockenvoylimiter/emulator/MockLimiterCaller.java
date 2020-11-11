@@ -28,7 +28,8 @@ public class MockLimiterCaller {
 
     final RateLimiterClientRequest rateLimiterClientRequest =
         new RateLimiterClientRequest(product, caseType, ipAddress, uprn, telNo);
-    final RequestValidationStatus requestValidationStatus = mockLimiter.postRequest(rateLimiterClientRequest);
+    final RequestValidationStatus requestValidationStatus =
+        mockLimiter.postRequest(rateLimiterClientRequest);
 
     String overallCode = "OK";
     if (!requestValidationStatus.isValid()) {

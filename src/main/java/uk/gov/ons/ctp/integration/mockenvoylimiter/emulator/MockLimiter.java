@@ -13,12 +13,12 @@ import uk.gov.ons.ctp.integration.ratelimiter.model.CurrentLimit;
 import uk.gov.ons.ctp.integration.ratelimiter.model.LimitStatus;
 
 /**
- * simulates the real envoy limiter - will store details
- * as each test is run, (is NOT recreated for each test). Normally this would be undesirable in a
- * test situation, but in our case it more realistically models the actual envoy limiter, since we
- * won't be resetting it because it changes state for each test run, then care must be taken
- * creating tests that do not use data that has been used before the in-memory data structures will
- * grow big very fast, so care must be taken if a LOT of calls are made
+ * simulates the real envoy limiter - will store details as each test is run, (is NOT recreated for
+ * each test). Normally this would be undesirable in a test situation, but in our case it more
+ * realistically models the actual envoy limiter, since we won't be resetting it because it changes
+ * state for each test run, then care must be taken creating tests that do not use data that has
+ * been used before the in-memory data structures will grow big very fast, so care must be taken if
+ * a LOT of calls are made
  */
 public class MockLimiter {
 
@@ -134,7 +134,7 @@ public class MockLimiter {
       limitRemaining = numberRequestsAllowed - postsWithinScopeCount;
     }
 
-    final CurrentLimit currentLimit = new CurrentLimit(numberRequestsAllowed,"HOUR");
+    final CurrentLimit currentLimit = new CurrentLimit(numberRequestsAllowed, "HOUR");
     final LimitStatus limitStatus = new LimitStatus(recordKey, currentLimit, limitRemaining);
     requestValidationStatus.getLimitStatusList().add(limitStatus);
   }
@@ -223,8 +223,7 @@ public class MockLimiter {
   }
 
   private void setupTimeMaps() {
-    allowanceMap.forEach(
-        (key, value) -> postingsTimeMap.put(key, getNewTimeMap()));
+    allowanceMap.forEach((key, value) -> postingsTimeMap.put(key, getNewTimeMap()));
   }
 
   private Map<String, List<Integer>> getNewTimeMap() {
