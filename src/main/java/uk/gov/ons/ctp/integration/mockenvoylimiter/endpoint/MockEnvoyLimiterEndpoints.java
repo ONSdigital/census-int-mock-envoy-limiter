@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.ons.ctp.common.endpoint.CTPEndpoint;
-import uk.gov.ons.ctp.integration.ratelimiter.client.RateLimiterClient;
 import uk.gov.ons.ctp.integration.ratelimiter.model.CurrentLimit;
 import uk.gov.ons.ctp.integration.ratelimiter.model.LimitStatus;
 import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitRequest;
@@ -22,7 +21,7 @@ import uk.gov.ons.ctp.integration.ratelimiter.model.RateLimitResponse;
 @RestController
 @RequestMapping(value = "/", produces = "application/json")
 public final class MockEnvoyLimiterEndpoints implements CTPEndpoint {
-  private static final Logger log = LoggerFactory.getLogger(RateLimiterClient.class);
+  private static final Logger log = LoggerFactory.getLogger(MockEnvoyLimiterEndpoints.class);
 
   private enum LimitMode {
     NoLimits(HttpStatus.OK, "OK"),
